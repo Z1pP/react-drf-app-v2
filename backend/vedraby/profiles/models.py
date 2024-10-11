@@ -1,6 +1,6 @@
 from django.db import models
 
-from vedraby.user.models import CustomUser
+from user.models import CustomUser
 
 
 class Profile(models.Model):
@@ -13,7 +13,9 @@ class Profile(models.Model):
     phone_number = models.CharField(
         verbose_name="Номер телефона", blank=True, null=True
     )
-    avatar = models.ImageField("Аватар", upload_to="/avatars", blank=True, null=True)
+    avatar = models.ImageField(
+        "Аватар", upload_to="media/images/avatars", blank=True, null=True
+    )
     created_at = models.DateTimeField("Дата создания", auto_now_add=True)
     updated_at = models.DateTimeField("Дата обновления", auto_now=True)
 
