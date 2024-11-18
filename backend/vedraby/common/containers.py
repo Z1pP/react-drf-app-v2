@@ -2,6 +2,7 @@ import punq
 
 from user.repository import UserRepository, BaseUserRepository
 from user.services import UserService
+from authentication.services import TokenService, AuthBearerService
 from user.validators import (
     BaseValidator,
     EmailValidatorService,
@@ -14,6 +15,7 @@ from user.commands import (
     UpdateUserCommand,
     DeleteUserCommand,
 )
+from authentication.commands import CreateTokenCommand, RefreshTokenCommand
 
 container = punq.Container()
 
@@ -23,7 +25,8 @@ container.register(UserRepository)
 
 # Services
 container.register(UserService)
-
+container.register(TokenService)
+container.register(AuthBearerService)
 # Validators
 container.register(BaseValidator, EmailValidatorService)
 container.register(BaseValidator, PasswordValidatorService)
@@ -34,3 +37,5 @@ container.register(CreateUserCommand)
 container.register(GetUserByIdCommand)
 container.register(UpdateUserCommand)
 container.register(DeleteUserCommand)
+container.register(CreateTokenCommand)
+container.register(RefreshTokenCommand)
