@@ -10,12 +10,15 @@ from user.commands import (
     UpdateUserCommand,
     DeleteUserCommand,
 )
+from authentication.services import AuthBearerService
 from common.containers import container
 
-router = Router()
+router = Router(auth=container.resolve(AuthBearerService))
 
 
-@router.get("/", response=list[UserResponseSchema], operation_id="get_all_users")
+@router.get(
+    "/", response=list[UserResponseSchema], operation_id="get_all_users", auth=None
+)
 def get_users(request) -> list[UserResponseSchema]:
     command: GetAllUsersCommand = container.resolve(GetAllUsersCommand)
     try:
@@ -26,9 +29,7 @@ def get_users(request) -> list[UserResponseSchema]:
 
 
 @router.post(
-    "/",
-    response=UserResponseSchema,
-    operation_id="create_new_user",
+    "/", response=UserResponseSchema, operation_id="create_new_user", auth=None
 )
 def create_user(request, user: UserInSchema) -> UserResponseSchema:
     command: CreateUserCommand = container.resolve(CreateUserCommand)
@@ -39,32 +40,33 @@ def create_user(request, user: UserInSchema) -> UserResponseSchema:
         raise HttpError(400, str(e))
 
 
-@router.get("/{user_id}", response=UserResponseSchema, operation_id="get_current_user")
-def get_user_by_id(request, user_id: int) -> UserResponseSchema:
+@router.get("/me", response=UserResponseSchema, operation_id="get_current_user")
+def get_user_by_id(request) -> UserResponseSchema:
     command: GetUserByIdCommand = container.resolve(GetUserByIdCommand)
+    user = request.auth
     try:
-        user_dto = command.execute(user_id=user_id)
+        user_dto = command.execute(user_id=user.id)
         return UserResponseSchema.to_response(user_dto)
     except CustomUser.DoesNotExist:
         raise HttpError(404, "User not found")
 
 
-@router.patch(
-    "/{user_id}", response=UserResponseSchema, operation_id="update_current_user"
-)
-def update_user(request, user_id: int, user: UserUpdateSchema) -> UserResponseSchema:
+@router.patch("/", response=UserResponseSchema, operation_id="update_current_user")
+def update_user(request, user: UserUpdateSchema) -> UserResponseSchema:
     command: UpdateUserCommand = container.resolve(UpdateUserCommand)
+    user = request.auth
     try:
-        user_dto = command.execute(user_id=user_id, user=user.to_dto())
+        user_dto = command.execute(user_id=user.id, user=user.to_dto())
         return UserResponseSchema.to_response(user_dto)
     except CustomUser.DoesNotExist:
         raise HttpError(404, "User not found")
 
 
-@router.delete("/{user_id}", operation_id="delete_user")
-def delete_user(request, user_id: int) -> None:
+@router.delete("/", operation_id="delete_user")
+def delete_user(request) -> None:
     command: DeleteUserCommand = container.resolve(DeleteUserCommand)
+    user = request.auth
     try:
-        command.execute(user_id=user_id)
+        command.execute(user_id=user.id)
     except CustomUser.DoesNotExist:
         raise HttpError(404, "User not found")
